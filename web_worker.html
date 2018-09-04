@@ -1,0 +1,74 @@
+<!-- When executing scripts in an HTML page, the page becomes unresponsive until the script is finished. -->
+
+<!-- A web worker is a JavaScript that runs in the background, independently of other scripts, without affecting -->
+<!-- the performance of the page. You can continue to do whatever you want: clicking, selecting things, etc., -->
+<!-- while the web worker runs in the background. -->
+
+<!DOCTYPE html>
+<html>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+<body>
+
+<div class="row">
+    <div class="col-sm-6">
+      <div class="form-group col-xs-6">
+        <input type="number" name="clock_hr" id="clock_hr" value="10" min="0" max="59" class="form-control" onchange="if(parseInt(this.value)<10)this.value='0'+parseInt(this.value);">
+      </div>
+      <span class="fa fa-colon"></span>
+      <div class="form-group col-xs-6 row">
+        <input type="number" name="clock_min" id="clock_min" value="24" min="0" max="59" class="form-control" onchange="if(parseInt(this.value)<10)this.value='0'+parseInt(this.value);">
+      </div>
+    </div>
+    <div class="col-sm-4">
+      <div class="form-group">
+        <button type="button" id="start_timer" onclick="startClock(this)" class="form-control pmbtn">START</button>
+      </div>
+    </div>
+  </div>
+
+
+<script>
+
+var w;
+function startClock(btn){
+  if(btn.innerHTML=="START")
+  {
+    btn.classList.toggle("stop");
+    btn.setAttribute( "onClick", "stopClock(this);" );
+    clock=true;
+    btn.innerHTML="STOP";
+    $("#start_clock").val(true);
+    min = parseInt($('#clock_hr').val());
+    sec = parseInt($('#clock_min').val());
+    if(typeof(Worker)!=="undefined")  //check whether the user's browser supports it
+    {
+      w = new Worker("./demo_worker.js");
+      w.addEventListener('message', function(msg){
+        $('#clock_hr').val(msg.data[0]);
+        $('#clock_min').val(msg.data[1]);
+      });
+      w.postMessage([min, sec]);
+      document.getElementsByName('commit')[0].click();
+    }else
+    {
+      console.log("Sorry, your browser does not support Web Workers...");
+    }
+  }
+}
+function stopClock(btn){
+  if(btn.innerHTML=="STOP")
+  {
+    w.terminate();
+    w = undefined;
+    btn.classList.toggle("stop");
+    btn.setAttribute( "onClick", "startClock(this);" );
+    clock=false;
+    btn.innerHTML="START";
+    $("#start_clock").val(false);
+    document.getElementsByName('commit')[0].click();
+  }
+}
+</script>
+
+</body>
+</html>
